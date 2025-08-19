@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\Author;
 use App\Form\AuthorType;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -22,7 +23,7 @@ final class AuthorController extends AbstractController
     }
 
     #[Route('/new', name: 'app_admin_author_new', methods: ['GET', 'POST'])]
-    public function new(Request $request): Response
+    public function new(Request $request, EntityManagerInterface $manager): Response
     {
         // 1) entité support du formulaire
         $author = new Author();
@@ -35,8 +36,12 @@ final class AuthorController extends AbstractController
 
         // 4) si soumis et valide → (on fera persist/flush juste après)
         if ($form->isSubmitted() && $form->isValid()) {
-            // TODO: sauvegarde + flash + redirection
-            // return $this->redirectToRoute('app_admin_author_index');
+           $manager->persist($author);
+           $manager->flush();
+           // les données de $author sont maintenant dans la base de données
+
+
+           return $this->redirectToRoute(route:'app_admin_author_index');
         }
 
         // 5) IMPORTANT : passer une FormView à Twig
