@@ -6,7 +6,10 @@ use App\Repository\EditorRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
+#[UniqueEntity(['name'])]
 #[ORM\Entity(repositoryClass: EditorRepository::class)]
 class Editor
 {
@@ -15,10 +18,12 @@ class Editor
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Assert\NotBlank(message: "Le nom est obligatoire.")]
+    #[Assert\Length(min: 2, max: 255)]
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\OneToMany(targetEntity: Book::class, mappedBy: 'editor', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Book::class, mappedBy: 'editor')]
     private Collection $books;
 
     public function __construct()
@@ -39,7 +44,6 @@ class Editor
     public function setName(string $name): static
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -57,19 +61,16 @@ class Editor
             $this->books->add($book);
             $book->setEditor($this);
         }
-
         return $this;
     }
 
     public function removeBook(Book $book): static
     {
         if ($this->books->removeElement($book)) {
-            // set the owning side to null (unless already changed)
             if ($book->getEditor() === $this) {
                 $book->setEditor(null);
             }
         }
-
         return $this;
     }
 }

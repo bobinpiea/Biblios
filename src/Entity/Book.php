@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 class Book
@@ -17,27 +18,41 @@ class Book
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 2, max: 255)]
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Isbn(type: 'isbn13', message: "L'ISBN doit être un ISBN-13 valide.")]
     #[ORM\Column(length: 255)]
     private ?string $isbn = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Url]
+    #[Assert\Length(max: 255)]
     #[ORM\Column(length: 255)]
     private ?string $cover = null;
 
-    #[ORM\Column]
+    #[Assert\NotNull]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeImmutable $editedAt = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 20)]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $plot = null;
 
+    #[Assert\NotNull]
+    #[Assert\Positive]
     #[ORM\Column]
     private ?int $pageNumber = null;
 
-    #[ORM\Column(length: 255)]
+    #[Assert\NotNull]
+    #[ORM\Column(enumType: BookStatus::class)]
     private ?BookStatus $status = null;
 
+    #[Assert\NotNull]
     #[ORM\ManyToOne(inversedBy: 'books')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Editor $editor = null;
@@ -67,7 +82,6 @@ class Book
     public function setTitle(string $title): static
     {
         $this->title = $title;
-
         return $this;
     }
 
@@ -79,7 +93,6 @@ class Book
     public function setIsbn(string $isbn): static
     {
         $this->isbn = $isbn;
-
         return $this;
     }
 
@@ -91,7 +104,6 @@ class Book
     public function setCover(string $cover): static
     {
         $this->cover = $cover;
-
         return $this;
     }
 
@@ -103,7 +115,6 @@ class Book
     public function setEditedAt(\DateTimeImmutable $editedAt): static
     {
         $this->editedAt = $editedAt;
-
         return $this;
     }
 
@@ -115,7 +126,6 @@ class Book
     public function setPlot(string $plot): static
     {
         $this->plot = $plot;
-
         return $this;
     }
 
@@ -127,7 +137,6 @@ class Book
     public function setPageNumber(int $pageNumber): static
     {
         $this->pageNumber = $pageNumber;
-
         return $this;
     }
 
@@ -139,7 +148,6 @@ class Book
     public function setStatus(BookStatus $status): static
     {
         $this->status = $status;
-
         return $this;
     }
 
@@ -151,7 +159,6 @@ class Book
     public function setEditor(?Editor $editor): static
     {
         $this->editor = $editor;
-
         return $this;
     }
 
@@ -169,19 +176,16 @@ class Book
             $this->comments->add($comment);
             $comment->setBook($this);
         }
-
         return $this;
     }
 
     public function removeComment(Comment $comment): static
     {
         if ($this->comments->removeElement($comment)) {
-            // set the owning side to null (unless already changed)
             if ($comment->getBook() === $this) {
                 $comment->setBook(null);
             }
         }
-
         return $this;
     }
 
@@ -199,7 +203,6 @@ class Book
             $this->authors->add($author);
             $author->addBook($this);
         }
-
         return $this;
     }
 
@@ -208,7 +211,6 @@ class Book
         if ($this->authors->removeElement($author)) {
             $author->removeBook($this);
         }
-
         return $this;
     }
 }

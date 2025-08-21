@@ -6,8 +6,11 @@ use App\Repository\AuthorRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AuthorRepository::class)]
+#[UniqueEntity(['name'])]
 class Author
 {
     #[ORM\Id]
@@ -15,15 +18,31 @@ class Author
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Assert\NotBlank(message: "Le nom est obligatoire.")]
+    #[Assert\Length(
+        min: 2,
+        max: 255,
+        minMessage: "Le nom doit contenir au moins {{ limit }} caractères.",
+        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères."
+    )]
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[Assert\NotNull(message: "La date de naissance est obligatoire.")]
     #[ORM\Column]
     private ?\DateTimeImmutable $dateOfBirth = null;
 
+    #[Assert\GreaterThan(
+        propertyPath: 'dateOfBirth',
+        message: "La date de décès doit être postérieure à la date de naissance."
+    )]
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $dateOfDeath = null;
 
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "La nationalité ne peut pas dépasser {{ limit }} caractères."
+    )]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $nationality = null;
 
