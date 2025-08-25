@@ -4,49 +4,65 @@ namespace App\Controller\Admin;
 
 use App\Entity\Author;
 use App\Form\AuthorType;
+use App\Repository\AuthorRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Pagerfanta\Doctrine\ORM\QueryAdapter;
+use Pagerfanta\Pagerfanta;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-#[Route('/admin/author')] // préfixe commun aux routes de ce contrôleur
-final class AuthorController extends AbstractController
+#[Route('/admin/author')]
+class AuthorController extends AbstractController
 {
-    #[Route('', name: 'app_admin_author_index')]
-    public function index(): Response
+    #[Route('', name: 'app_admin_author_index', methods: ['GET'])]
+    public function index(Request $request, AuthorRepository $repository): Response
     {
-        // page d’accueil des auteurs (liste à venir)
+        $dates = [];
+        if ($request->query->has('start')) {
+            $dates['start'] = $request->query->get('start');
+        }
+        if ($request->query->has('end')) {
+            $dates['end'] = $request->query->get('end');
+        }
+
+        $authors = Pagerfanta::createForCurrentPageWithMaxPerPage(
+            new QueryAdapter($repository->findByDateOfBirth()),
+            $request->query->get('page', 1),
+            10
+        );
+
         return $this->render('admin/author/index.html.twig', [
-            'controller_name' => 'AuthorController',
+            'authors' => $authors,
         ]);
     }
 
     #[Route('/new', name: 'app_admin_author_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $manager): Response
+    #[Route('/{id}/edit', name: 'app_admin_author_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function new(?Author $author, Request $request, EntityManagerInterface $manager): Response
     {
-        // 1) entité support du formulaire
-        $author = new Author();
-
-        // 2) formulaire lié à l’entité
+        $author ??= new Author();
         $form = $this->createForm(AuthorType::class, $author);
 
-        // 3) lie la requête (GET/POST) et hydrate $author en cas de POST
         $form->handleRequest($request);
-
-        // 4) si soumis et valide → (on fera persist/flush juste après)
         if ($form->isSubmitted() && $form->isValid()) {
-           $manager->persist($author);
-           $manager->flush();
-           // les données de $author sont maintenant dans la base de données
+            $manager->persist($author);
+            $manager->flush();
 
-
-           return $this->redirectToRoute(route:'app_admin_author_index');
+            return $this->redirectToRoute('app_admin_author_index');
         }
 
-        // 5) IMPORTANT : passer une FormView à Twig
         return $this->render('admin/author/new.html.twig', [
-            'form' => $form->createView(),
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_admin_author_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function show(?Author $author): Response
+    {
+        return $this->render('admin/author/show.html.twig', [
+            'author' => $author,
         ]);
     }
 }

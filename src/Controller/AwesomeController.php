@@ -6,7 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-final class AwesomeController extends AbstractController
+class AwesomeController extends AbstractController
 {
     #[Route('/awesome', name: 'app_awesome')]
     public function index(): Response
